@@ -14,8 +14,6 @@ from Math.MatrixNotSymmetric import MatrixNotSymmetric
 
 
 cdef class Matrix(object):
-    cdef int __row, __col
-    cdef list __values
 
     def __init__(self, row, col=None, minValue=None, maxValue=None, seed=None):
         """
