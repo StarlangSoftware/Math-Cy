@@ -1,11 +1,7 @@
-from __future__ import annotations
-import collections
 import math
 
 
-class DiscreteDistribution(collections.OrderedDict):
-
-    __sum: float
+cdef class DiscreteDistribution(dict):
 
     def __init__(self, **kwargs):
         """
@@ -14,7 +10,7 @@ class DiscreteDistribution(collections.OrderedDict):
         super().__init__(**kwargs)
         self.__sum = 0.0
 
-    def addItem(self, item: str):
+    cpdef addItem(self, str item):
         """
         The addItem method takes a String item as an input and if this map contains a mapping for the item it puts the
         item with given value + 1, else it puts item with value of 1.
@@ -30,7 +26,7 @@ class DiscreteDistribution(collections.OrderedDict):
             self[item] = 1
         self.__sum = self.__sum + 1
 
-    def removeItem(self, item: str):
+    cpdef removeItem(self, str item):
         """
         The removeItem method takes a String item as an input and if this map contains a mapping for the item it puts
         the item with given value - 1, and if its value is 0, it removes the item.
@@ -45,7 +41,7 @@ class DiscreteDistribution(collections.OrderedDict):
             if self[item] == 0:
                 self.pop(item)
 
-    def addDistribution(self, distribution: DiscreteDistribution):
+    cpdef addDistribution(self, DiscreteDistribution distribution):
         """
         The addDistribution method takes a DiscreteDistribution as an input and loops through the entries in this
         distribution and if this map contains a mapping for the entry it puts the entry with its value + entry,
@@ -63,7 +59,7 @@ class DiscreteDistribution(collections.OrderedDict):
                 self[entry] = distribution[entry]
             self.__sum += distribution[entry]
 
-    def removeDistribution(self, distribution: DiscreteDistribution):
+    cpdef removeDistribution(self, DiscreteDistribution distribution):
         """
         The removeDistribution method takes a DiscreteDistribution as an input and loops through the entries in this
         distribution and if this map contains a mapping for the entry it puts the entry with its key - value, else it
@@ -81,7 +77,7 @@ class DiscreteDistribution(collections.OrderedDict):
                 self.pop(entry)
             self.__sum -= distribution[entry]
 
-    def getSum(self) -> float:
+    cpdef double getSum(self):
         """
         The getter for sum variable.
 
@@ -92,7 +88,7 @@ class DiscreteDistribution(collections.OrderedDict):
         """
         return self.__sum
 
-    def getIndex(self, item: str) -> int:
+    cpdef int getIndex(self, str item):
         """
         The getIndex method takes an item as an input and returns the index of given item.
 
@@ -108,7 +104,7 @@ class DiscreteDistribution(collections.OrderedDict):
         """
         return list(self.keys()).index(item)
 
-    def containsItem(self, item: str) -> bool:
+    cpdef bint containsItem(self, str item):
         """
         The containsItem method takes an item as an input and returns true if this map contains a mapping for the
         given item.
@@ -125,7 +121,7 @@ class DiscreteDistribution(collections.OrderedDict):
         """
         return item in self
 
-    def getItem(self, index: int) -> str:
+    cpdef str getItem(self, int index):
         """
         The getItem method takes an index as an input and returns the item at given index.
 
@@ -141,7 +137,7 @@ class DiscreteDistribution(collections.OrderedDict):
         """
         return list(self.keys())[index]
 
-    def getValue(self, index: int) -> int:
+    cpdef int getValue(self, int index):
         """
         The getValue method takes an index as an input and returns the value at given index.
 
@@ -157,7 +153,7 @@ class DiscreteDistribution(collections.OrderedDict):
         """
         return list(self.values())[index]
 
-    def getCount(self, item: str) -> int:
+    cpdef int getCount(self, str item):
         """
         The getCount method takes an item as an input returns the value to which the specified item is mapped, or ""
         if this map contains no mapping for the key.
@@ -173,7 +169,7 @@ class DiscreteDistribution(collections.OrderedDict):
         """
         return self[item]
 
-    def getMaxItem(self) -> str:
+    cpdef str getMaxItem(self):
         """
         The getMaxItem method loops through the entries and gets the entry with maximum value.
 
@@ -182,6 +178,8 @@ class DiscreteDistribution(collections.OrderedDict):
         string
             the entry with maximum value.
         """
+        cdef int maxValue
+        cdef str maxItem
         maxValue = -1
         maxItem = ""
         for item in self:
@@ -190,7 +188,7 @@ class DiscreteDistribution(collections.OrderedDict):
                 maxItem = item
         return maxItem
 
-    def getMaxItemIncludeTheseOnly(self, includeTheseOnly: list) -> str:
+    cpdef str getMaxItemIncludeTheseOnly(self, list includeTheseOnly):
         """
         Another getMaxItem method which takes a list of Strings. It loops through the items in this list
         and gets the item with maximum value.
@@ -205,6 +203,8 @@ class DiscreteDistribution(collections.OrderedDict):
         string
             the item with maximum value.
         """
+        cdef int maxValue, frequency
+        cdef str maxItem
         maxValue = -1
         maxItem = ""
         for item in includeTheseOnly:
@@ -216,7 +216,7 @@ class DiscreteDistribution(collections.OrderedDict):
                 maxItem = item
         return maxItem
 
-    def getProbability(self, item: str) -> float:
+    cpdef double getProbability(self, str item):
         """
         The getProbability method takes an item as an input returns the value to which the specified item is mapped over
         sum, or 0.0 if this map contains no mapping for the key.
@@ -236,7 +236,7 @@ class DiscreteDistribution(collections.OrderedDict):
         else:
             return 0.0
 
-    def getProbabilityLaplaceSmoothing(self, item: str) -> float:
+    cpdef double getProbabilityLaplaceSmoothing(self, str item):
         """
         The getProbabilityLaplaceSmoothing method takes an item as an input returns the smoothed value to which the
         specified item is mapped over sum, or 1.0 over sum if this map contains no mapping for the key.
@@ -255,7 +255,7 @@ class DiscreteDistribution(collections.OrderedDict):
         else:
             return 1.0 / (self.__sum + len(self) + 1)
 
-    def entropy(self) -> float:
+    cpdef double entropy(self):
         """
         The entropy method loops through the values and calculates the entropy of these values.
 
@@ -264,6 +264,8 @@ class DiscreteDistribution(collections.OrderedDict):
         double
             entropy value.
         """
+        cdef double total, probability
+        cdef int count
         total = 0.0
         for count in self.values():
             probability = count / self.__sum
