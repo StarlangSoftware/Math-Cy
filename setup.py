@@ -11,6 +11,6 @@ setup(
     url='https://github.com/olcaytaner/Math-Cy',
     license='',
     author='olcaytaner',
-    author_email='olcaytaner@isikun.edu.tr',
+    author_email='olcay.yildiz@ozyegin.edu.tr',
     description='Math library'
 )
