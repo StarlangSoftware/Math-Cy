@@ -8,7 +8,7 @@ setup(
     version='1.0.7',
     packages=['Math'],
     package_data={'Math': ['*.pxd', '*.pyx', '*.c']},
-    url='https://github.com/olcaytaner/Math-Cy',
+    url='https://github.com/StarlangSoftware/Math-Cy',
     license='',
     author='olcaytaner',
     author_email='olcay.yildiz@ozyegin.edu.tr',
