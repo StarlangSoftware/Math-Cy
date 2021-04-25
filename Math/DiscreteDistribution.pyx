@@ -236,6 +236,12 @@ cdef class DiscreteDistribution(dict):
         else:
             return 0.0
 
+    cpdef dict getProbabilityDistribution(self):
+        result = {}
+        for item in self:
+            result[item] = self.getProbability(item)
+        return result
+
     cpdef double getProbabilityLaplaceSmoothing(self, str item):
         """
         The getProbabilityLaplaceSmoothing method takes an item as an input returns the smoothed value to which the

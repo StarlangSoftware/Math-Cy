@@ -15,5 +15,6 @@ cdef class DiscreteDistribution(dict):
     cpdef str getMaxItem(self)
     cpdef str getMaxItemIncludeTheseOnly(self, list includeTheseOnly)
     cpdef double getProbability(self, str item)
+    cpdef dict getProbabilityDistribution(self)
     cpdef double getProbabilityLaplaceSmoothing(self, str item)
     cpdef double entropy(self)
