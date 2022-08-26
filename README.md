@@ -1,3 +1,8 @@
+Video Lectures
+============
+
+[<img src=https://github.com/StarlangSoftware/Math/blob/master/video.jpg width="50%">](https://youtu.be/GhcoaVi0SMs)
+
 For Developers
 ============
 You can also see [Python](https://github.com/starlangsoftware/Math-Py), [Java](https://github.com/starlangsoftware/Math), [C++](https://github.com/starlangsoftware/Math-CPP), [Swift](https://github.com/starlangsoftware/Math-Swift), [Js](https://github.com/starlangsoftware/Math-Js), or [C#](https://github.com/starlangsoftware/Math-CPP) repository.
