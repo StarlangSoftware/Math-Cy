@@ -163,7 +163,8 @@ cdef class Distribution(object):
         return zval
 
     @staticmethod
-    def chiSquare(x: double, freedom: int) -> double:
+    def chiSquare(x: double,
+                  freedom: int) -> double:
         """
         The chiSquare method is used to determine whether there is a significant difference between the expected
         frequencies and the observed frequencies in one or more categories. It takes a double input x and an integer
@@ -225,7 +226,8 @@ cdef class Distribution(object):
             return s
 
     @staticmethod
-    def chiSquareInverse(p: double, freedom: int) -> double:
+    def chiSquareInverse(p: double,
+                         freedom: int) -> double:
         """
         The chiSquareInverse method returns the Chi Square-Inverse of given probability value with given degree of
         freedom.
@@ -260,7 +262,9 @@ cdef class Distribution(object):
         return chisqval
 
     @staticmethod
-    def fDistribution(F: double, freedom1: int, freedom2: int) -> double:
+    def fDistribution(F: double,
+                      freedom1: int,
+                      freedom2: int) -> double:
         """
         The fDistribution method is used to observe whether two samples have the same variance. It takes a double input
         F and two integer freedom1 and freedom2 for degrees of freedom as inputs. It returns the F-Distribution result.
@@ -332,7 +336,9 @@ cdef class Distribution(object):
         return 1.0 - p
 
     @staticmethod
-    def fDistributionInverse(p: double, freedom1: int, freedom2: int) -> double:
+    def fDistributionInverse(p: double,
+                             freedom1: int,
+                             freedom2: int) -> double:
         """
         The fDistributionInverse method returns the F-Distribution Inverse of given probability value.
 
@@ -367,7 +373,8 @@ cdef class Distribution(object):
         return fval
 
     @staticmethod
-    def tDistribution(T: double, freedom: int) -> double:
+    def tDistribution(T: double,
+                      freedom: int) -> double:
         """
         The tDistribution method is used instead of the normal distribution when there is small samples. It takes a
         double input T and an integer freedom for degree of freedom as inputs. It returns the T-Distribution result by
@@ -391,7 +398,8 @@ cdef class Distribution(object):
             return 1 - Distribution.fDistribution(T * T, 1, freedom) / 2
 
     @staticmethod
-    def tDistributionInverse(p: double, freedom: int) -> double:
+    def tDistributionInverse(p: double,
+                             freedom: int) -> double:
         """
         The tDistributionInverse method returns the T-Distribution Inverse of given probability value.
 

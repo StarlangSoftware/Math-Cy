@@ -15,7 +15,12 @@ from Math.MatrixNotSymmetric import MatrixNotSymmetric
 
 cdef class Matrix(object):
 
-    def __init__(self, row, col=None, minValue=None, maxValue=None, seed=None):
+    def __init__(self,
+                 row,
+                 col=None,
+                 minValue=None,
+                 maxValue=None,
+                 seed=None):
         """
         Constructor of Matrix class which takes row and column numbers (Vectors) as inputs.
 
@@ -67,7 +72,9 @@ cdef class Matrix(object):
     cpdef Matrix clone(self):
         return copy.deepcopy(self)
 
-    cpdef double getValue(self, int rowNo, int colNo):
+    cpdef double getValue(self,
+                          int rowNo,
+                          int colNo):
         """
         The getter for the index at given rowNo and colNo of values list.
 
@@ -85,7 +92,10 @@ cdef class Matrix(object):
         """
         return self.__values[rowNo][colNo]
 
-    cpdef setValue(self, int rowNo, int colNo, double value):
+    cpdef setValue(self,
+                   int rowNo,
+                   int colNo,
+                   double value):
         """
         The setter for the value at given index of values list.
 
@@ -100,7 +110,10 @@ cdef class Matrix(object):
         """
         self.__values[rowNo][colNo] = value
 
-    cpdef addValue(self, int rowNo, int colNo, double value):
+    cpdef addValue(self,
+                   int rowNo,
+                   int colNo,
+                   double value):
         """
         The addValue method adds the given value to the item at given index of values list.
 
@@ -115,7 +128,9 @@ cdef class Matrix(object):
         """
         self.__values[rowNo][colNo] += value
 
-    cpdef increment(self, int rowNo, int colNo):
+    cpdef increment(self,
+                    int rowNo,
+                    int colNo):
         """
         The increment method adds 1 to the item at given index of values list.
 
@@ -248,7 +263,9 @@ cdef class Matrix(object):
             for j in range(self.__col):
                 self.__values[i][j] += m.__values[i][j]
 
-    cpdef addRowVector(self, int rowNo, Vector v):
+    cpdef addRowVector(self,
+                       int rowNo,
+                       Vector v):
         """
         The add method which takes a row number and a Vector as inputs. It sums up the corresponding values at the given
         row of values list and given Vector. If the sizes of both Matrix and values list do not match, it throws
@@ -503,7 +520,11 @@ cdef class Matrix(object):
                 result.__values[j][i] = self.__values[i][j]
         return result
 
-    cpdef Matrix partial(self, int rowStart, int rowEnd, int colStart, int colEnd):
+    cpdef Matrix partial(self,
+                         int rowStart,
+                         int rowEnd,
+                         int colStart,
+                         int colEnd):
         """
         The partial method takes 4 integer inputs; rowStart, rowEnd, colStart, colEnd and creates a Matrix size of
         rowEnd - rowStart + 1 x colEnd - colStart + 1. Then, puts corresponding items of values list
@@ -676,7 +697,13 @@ cdef class Matrix(object):
                     b.__values[j][i] = total / b.__values[i][i]
         return b
 
-    cpdef __rotate(self, double s, double tau, int i, int j, int k, int l):
+    cpdef __rotate(self,
+                   double s,
+                   double tau,
+                   int i,
+                   int j,
+                   int k,
+                   int l):
         """
         The rotate method rotates values list according to given inputs.
 
@@ -780,3 +807,6 @@ cdef class Matrix(object):
                 result.append(Eigenvector(d[i], v.getColumnVector(i)))
         result.sort(key=lambda eigenvector: eigenvector.getEigenvalue(), reverse=True)
         return result
+
+    def __repr__(self):
+        return f"{self.__values}"

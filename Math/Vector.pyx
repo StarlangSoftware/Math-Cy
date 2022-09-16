@@ -5,7 +5,9 @@ from Math.VectorSizeMismatch import VectorSizeMismatch
 
 cdef class Vector(object):
 
-    def __init__(self, valuesOrSize=None, initial=None):
+    def __init__(self,
+                 valuesOrSize=None,
+                 initial=None):
         """
         A constructor of Vector class which takes a list values as an input. Then, initializes
         values list and size variable with given input and its size.
@@ -26,7 +28,9 @@ cdef class Vector(object):
         else:
             self.initAllSame(valuesOrSize, initial)
 
-    cpdef initAllSame(self, int size, double x):
+    cpdef initAllSame(self,
+                      int size,
+                      double x):
         """
         Another constructor of Vector class which takes integer size and double x as inputs. Then, initializes size
         variable with given size input and creates new values list and adds given input x to values list.
@@ -44,7 +48,10 @@ cdef class Vector(object):
         for i in range(size):
             self.__values.append(x)
 
-    cpdef initAllZerosExceptOne(self, int size, int index, double x):
+    cpdef initAllZerosExceptOne(self,
+                                int size,
+                                int index,
+                                double x):
         """
         Another constructor of Vector class which takes integer size, integer index and double x as inputs.
         Then, initializes size variable with given size input and creates new values list and adds 0.0 to
@@ -96,7 +103,9 @@ cdef class Vector(object):
         self.__values.append(x)
         self.__size = self.__size + 1
 
-    cpdef insert(self, int pos, double x):
+    cpdef insert(self,
+                 int pos,
+                 double x):
         """
         The insert method puts given input to the given index of values list and increments the size variable by one.
 
@@ -206,7 +215,9 @@ cdef class Vector(object):
             else:
                 self.__values[i] = 0.0
 
-    cpdef Vector skipVector(self, int mod, int value):
+    cpdef Vector skipVector(self,
+                            int mod,
+                            int value):
         """
         The skipVector method takes a mod and a value as inputs. It creates a new result Vector, and assigns given input
         value to i. While i is less than the size, it adds the ith item of values {@link ArrayList} to the result and
@@ -480,7 +491,9 @@ cdef class Vector(object):
         """
         return self.__values[index]
 
-    cpdef setValue(self, int index, double value):
+    cpdef setValue(self,
+                   int index,
+                   double value):
         """
         Setter for the setting the value at given index of values list.
 
@@ -493,7 +506,9 @@ cdef class Vector(object):
         """
         self.__values[index] = value
 
-    cpdef addValue(self, int index, double value):
+    cpdef addValue(self,
+                   int index,
+                   double value):
         """
         The addValue method adds the given value to the item at given index of values list.
 
@@ -505,3 +520,6 @@ cdef class Vector(object):
             value to add to given index.
         """
         self.__values[index] += value
+
+    def __repr__(self):
+        return f"{self.__values}"
