@@ -40,6 +40,7 @@ cdef class DiscreteDistribution(dict):
             self[item] = self[item] - 1
             if self[item] == 0:
                 self.pop(item)
+            self.__sum = self.__sum - 1
 
     cpdef addDistribution(self, DiscreteDistribution distribution):
         """
