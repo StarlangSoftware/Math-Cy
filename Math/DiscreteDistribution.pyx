@@ -238,6 +238,10 @@ cdef class DiscreteDistribution(dict):
             return 0.0
 
     cpdef dict getProbabilityDistribution(self):
+        """
+        Returns the distribution as a probability distribution
+        :return: Probability distribution
+        """
         result = {}
         for item in self:
             result[item] = self.getProbability(item)

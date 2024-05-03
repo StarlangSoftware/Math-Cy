@@ -66,10 +66,18 @@ cdef class Matrix(object):
                     self.__values[i][j] = row.getValue(i) * col.getValue(j)
 
     cpdef initZeros(self):
+        """
+        Initializes the matrix values with 0.
+        :return: Initialized matrix.
+        """
         cdef int i, j
         self.__values = [[0 for i in range(self.__col)] for j in range(self.__row)]
 
     cpdef Matrix clone(self):
+        """
+        Clones the matrix.
+        :return: Deep cloned copy.
+        """
         return copy.deepcopy(self)
 
     cpdef double getValue(self,
