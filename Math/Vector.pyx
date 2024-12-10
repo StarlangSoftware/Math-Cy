@@ -5,6 +5,14 @@ from Math.VectorSizeMismatch import VectorSizeMismatch
 
 cdef class Vector(object):
 
+    cpdef constructor1(self):
+        self.__values = []
+        self.__size = 0
+
+    cpdef constructor2(self, list values):
+        self.__values = values.copy()
+        self.__size = len(values)
+
     def __init__(self,
                  valuesOrSize=None,
                  initial=None):
@@ -20,11 +28,9 @@ cdef class Vector(object):
             initial value for each element
         """
         if valuesOrSize is None:
-            self.__values = []
-            self.__size = 0
+            self.constructor1()
         elif isinstance(valuesOrSize, list):
-            self.__values = valuesOrSize.copy()
-            self.__size = len(valuesOrSize)
+            self.constructor2(valuesOrSize)
         else:
             self.initAllSame(valuesOrSize, initial)
 

@@ -15,6 +15,44 @@ from Math.MatrixNotSymmetric import MatrixNotSymmetric
 
 cdef class Matrix(object):
 
+
+    cpdef constructor1(self, int row):
+        cdef int i
+        self.__row = row
+        self.__col = row
+        self.initZeros()
+        for i in range(self.__row):
+            self.__values[i][i] = 1.0
+
+    cpdef constructor2(self, int row, int col):
+        self.__row = row
+        self.__col = col
+        self.initZeros()
+
+    cpdef constructor3(self, int row, int col, float minValue):
+        cdef int i
+        self.__row = row
+        self.__col = col
+        self.initZeros()
+        for i in range(self.__row):
+            self.__values[i][i] = minValue
+
+    cpdef constructor4(self, int row, int col, float minValue, float maxValue, int seed):
+        self.__row = row
+        self.__col = col
+        random.seed(seed)
+        self.__values = [[random.uniform(minValue, maxValue) for _ in range(self.__col)] for _ in
+                         range(self.__row)]
+
+    cpdef constructor5(self, Vector row, Vector col):
+        cdef int i, j
+        self.__row = row.size()
+        self.__col = col.size()
+        self.initZeros()
+        for i in range(row.size()):
+            for j in range(col.size()):
+                self.__values[i][j] = row.getValue(i) * col.getValue(j)
+
     def __init__(self,
                  row,
                  col=None,
@@ -37,33 +75,18 @@ cdef class Matrix(object):
         seed : int
             seed for the random
         """
-        cdef int i, j
         if isinstance(row, int):
-            self.__row = row
             if col is not None:
-                self.__col = col
                 if minValue is None:
-                    self.initZeros()
+                    self.constructor2(row, col)
                 elif maxValue is None:
-                    self.initZeros()
-                    for i in range(self.__row):
-                        self.__values[i][i] = minValue
+                    self.constructor3(row, col, minValue)
                 else:
-                    random.seed(seed)
-                    self.__values = [[random.uniform(minValue, maxValue) for _ in range(self.__col)] for _ in
-                                     range(self.__row)]
+                    self.constructor4(row, col, minValue, maxValue, seed)
             else:
-                self.__col = row
-                self.initZeros()
-                for i in range(self.__row):
-                    self.__values[i][i] = 1.0
+                self.constructor1(row)
         elif isinstance(row, Vector) and isinstance(col, Vector):
-            self.__row = row.size()
-            self.__col = col.size()
-            self.initZeros()
-            for i in range(row.size()):
-                for j in range(col.size()):
-                    self.__values[i][j] = row.getValue(i) * col.getValue(j)
+            self.constructor5(row, col)
 
     cpdef initZeros(self):
         """

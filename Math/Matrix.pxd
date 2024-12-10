@@ -6,6 +6,11 @@ cdef class Matrix(object):
     cdef int __row, __col
     cdef list __values
 
+    cpdef constructor1(self, int row)
+    cpdef constructor2(self, int row, int col)
+    cpdef constructor3(self, int row, int col, float minValue)
+    cpdef constructor4(self, int row, int col, float minValue, float maxValue, int seed)
+    cpdef constructor5(self, Vector row, Vector col)
     cpdef initZeros(self)
     cpdef Matrix clone(self)
     cpdef double getValue(self, int rowNo, int colNo)

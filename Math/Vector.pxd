@@ -3,6 +3,8 @@ cdef class Vector(object):
     cdef int __size
     cdef list __values
 
+    cpdef constructor1(self)
+    cpdef constructor2(self, list values)
     cpdef initAllSame(self, int size, double x)
     cpdef initAllZerosExceptOne(self, int size, int index, double x)
     cpdef Vector biased(self)
