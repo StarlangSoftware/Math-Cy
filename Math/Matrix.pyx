@@ -326,7 +326,7 @@ cdef class Matrix(object):
         m : Matrix
             Matrix type input.
         """
-        cpdef int i, j
+        cdef int i, j
         if self.__row != m.__row or self.__col != m.__col:
             raise MatrixDimensionMismatch
         for i in range(self.__row):
