@@ -1,7 +1,7 @@
 cdef class Eigenvector(Vector):
 
     def __init__(self,
-                 eigenvalue: double,
+                 eigenvalue: float,
                  values: list):
         """
         A constructor of Eigenvector which takes a double eigenValue and an list values as inputs.

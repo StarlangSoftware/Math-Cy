@@ -78,13 +78,13 @@ cdef class DiscreteDistribution(dict):
                 self.pop(entry)
             self.__sum -= distribution[entry]
 
-    cpdef double getSum(self):
+    cpdef float getSum(self):
         """
         The getter for sum variable.
 
         RETURNS
         -------
-        double
+        float
             sum
         """
         return self.__sum
@@ -217,7 +217,7 @@ cdef class DiscreteDistribution(dict):
                 maxItem = item
         return maxItem
 
-    cpdef double getProbability(self, str item):
+    cpdef float getProbability(self, str item):
         """
         The getProbability method takes an item as an input returns the value to which the specified item is mapped over
         sum, or 0.0 if this map contains no mapping for the key.
@@ -229,7 +229,7 @@ cdef class DiscreteDistribution(dict):
 
         RETURNS
         -------
-        double
+        float
             the probability to which the specified item is mapped.
         """
         if item in self:
@@ -247,7 +247,7 @@ cdef class DiscreteDistribution(dict):
             result[item] = self.getProbability(item)
         return result
 
-    cpdef double getProbabilityLaplaceSmoothing(self, str item):
+    cpdef float getProbabilityLaplaceSmoothing(self, str item):
         """
         The getProbabilityLaplaceSmoothing method takes an item as an input returns the smoothed value to which the
         specified item is mapped over sum, or 1.0 over sum if this map contains no mapping for the key.
@@ -258,7 +258,7 @@ cdef class DiscreteDistribution(dict):
 
         RETURNS
         -------
-        double
+        float
             the smoothed probability to which the specified item is mapped.
         """
         if item in self:
@@ -266,16 +266,16 @@ cdef class DiscreteDistribution(dict):
         else:
             return 1.0 / (self.__sum + len(self) + 1)
 
-    cpdef double entropy(self):
+    cpdef float entropy(self):
         """
         The entropy method loops through the values and calculates the entropy of these values.
 
         RETURNS
         -------
-        double
+        float
             entropy value.
         """
-        cdef double total, probability
+        cdef float total, probability
         cdef int count
         total = 0.0
         for count in self.values():

@@ -14,19 +14,19 @@ cdef class Distribution(object):
     F_MAX = 9999.0
 
     @staticmethod
-    def __ex(x: double) -> double:
+    def __ex(x: float) -> float:
         """
-        The ex method takes a double x as an input, if x is less than -BIGX it returns 0, otherwise it returns Euler's
+        The ex method takes a float x as an input, if x is less than -BIGX it returns 0, otherwise it returns Euler's
         number e raised to the power of x.
 
         PARAMETERS
         ----------
-        x : double
-            double input.
+        x : float
+            float input.
 
         RETURNS
         -------
-        double
+        float
             0 if input is less than -BIGX, Euler's number e raised to the power of x otherwise.
         """
         if x < -Distribution.BIGX:
@@ -34,23 +34,23 @@ cdef class Distribution(object):
         return math.exp(x)
 
     @staticmethod
-    def beta(x: list) -> double:
+    def beta(x: list) -> float:
         """
-        The beta method takes a double list x as an input. It loops through x and accumulates
+        The beta method takes a float list x as an input. It loops through x and accumulates
         the value of gammaLn(x), also it sums up the items of x and returns (accumulated result - gammaLn of this
         summation).
 
         PARAMETERS
         ----------
         x : list
-            double list input.
+            float list input.
 
         RETURNS
         -------
-        double
+        float
             beta distribution at point x.
         """
-        cdef double total, result
+        cdef float total, result
         cdef int i
         total = 0.0
         result = 0.0
@@ -61,22 +61,22 @@ cdef class Distribution(object):
         return result
 
     @staticmethod
-    def gammaLn(x: double) -> double:
+    def gammaLn(x: float) -> float:
         """
-        The gammaLn method takes a double x as an input and returns the logarithmic result of the gamma distribution at
+        The gammaLn method takes a float x as an input and returns the logarithmic result of the gamma distribution at
         point x.
 
         PARAMETERS
         ----------
-        x : double
-            double input.
+        x : float
+            float input.
 
         RETURNS
         -------
-        double
+        float
             the logarithmic result of the gamma distribution at point x.
         """
-        cdef double y, tmp, ser
+        cdef float y, tmp, ser
         cdef int j
         cdef list cof
         cof = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2,
@@ -91,7 +91,7 @@ cdef class Distribution(object):
         return -tmp + math.log(2.5066282746310005 * ser / x)
 
     @staticmethod
-    def zNormal(z: double) -> double:
+    def zNormal(z: float) -> float:
         """
         The zNormal method performs the Z-Normalization. It ensures, that all elements of the input vector are
         transformed into the output vector whose mean is approximately 0 while the standard deviation is in a range
@@ -99,15 +99,15 @@ cdef class Distribution(object):
 
         PARAMETERS
         ----------
-        z : double
-            double input.
+        z : float
+            float input.
 
         RETURNS
         -------
-        double
+        float
             normalized value of given input.
         """
-        cdef double x, y, w
+        cdef float x, y, w
         if z == 0.0:
             x = 0.0
         else:
@@ -133,21 +133,21 @@ cdef class Distribution(object):
             return (1.0 - x) * 0.5
 
     @staticmethod
-    def zInverse(p: double) -> double:
+    def zInverse(p: float) -> float:
         """
         The zInverse method returns the Z-Inverse of given probability value.
 
         PARAMETERS
         ----------
-        p : double
+        p : float
             probability input.
 
         RETURNS
         -------
-        double
+        float
             the Z-Inverse of given probability.
         """
-        cdef double minz, maxz, zval, pval
+        cdef float minz, maxz, zval, pval
         minz = -Distribution.Z_MAX
         maxz = Distribution.Z_MAX
         zval = 0.0
@@ -163,26 +163,26 @@ cdef class Distribution(object):
         return zval
 
     @staticmethod
-    def chiSquare(x: double,
-                  freedom: int) -> double:
+    def chiSquare(x: float,
+                  freedom: int) -> float:
         """
         The chiSquare method is used to determine whether there is a significant difference between the expected
-        frequencies and the observed frequencies in one or more categories. It takes a double input x and an integer
+        frequencies and the observed frequencies in one or more categories. It takes a float input x and an integer
         freedom for degrees of freedom as inputs. It returns the Chi Squared result.
 
         PARAMETERS
         ----------
-        x : double
-            double input.
+        x : float
+            float input.
         freedom : int
             integer input for degrees of freedom.
 
         RETURNS
         -------
-        double
+        float
             the Chi Squared result.
         """
-        cdef double y, a, s, z, e, c
+        cdef float y, a, s, z, e, c
         y = 0
         if x <= 0.0 or freedom < 1:
             return 1.0
@@ -226,25 +226,25 @@ cdef class Distribution(object):
             return s
 
     @staticmethod
-    def chiSquareInverse(p: double,
-                         freedom: int) -> double:
+    def chiSquareInverse(p: float,
+                         freedom: int) -> float:
         """
         The chiSquareInverse method returns the Chi Square-Inverse of given probability value with given degree of
         freedom.
 
         PARAMETERS
         ----------
-        p : double
+        p : float
             probability input.
         freedom : int
             integer input for degrees of freedom.
 
         RETURNS
         -------
-        double
+        float
             the chiSquare-Inverse of given probability.
         """
-        cdef double minchisq, maxchisq, chisqval
+        cdef float minchisq, maxchisq, chisqval
         minchisq = 0.0
         maxchisq = Distribution.CHI_MAX
         if p <= 0.0:
@@ -262,17 +262,17 @@ cdef class Distribution(object):
         return chisqval
 
     @staticmethod
-    def fDistribution(F: double,
+    def fDistribution(F: float,
                       freedom1: int,
-                      freedom2: int) -> double:
+                      freedom2: int) -> float:
         """
-        The fDistribution method is used to observe whether two samples have the same variance. It takes a double input
+        The fDistribution method is used to observe whether two samples have the same variance. It takes a float input
         F and two integer freedom1 and freedom2 for degrees of freedom as inputs. It returns the F-Distribution result.
 
         PARAMETERS
         ----------
-        F : double
-            double input.
+        F : float
+            float input.
         freedom1 : int
             integer input for degrees of freedom.
         freedom2 : int
@@ -280,10 +280,10 @@ cdef class Distribution(object):
 
         RETURNS
         -------
-        double
+        float
             the F-Distribution result.
         """
-        cdef double w, z, p, y, d
+        cdef float w, z, p, y, d
         cdef int a, b, j, i
         if F < Distribution.F_EPSILON or freedom1 < 1 or freedom2 < 1:
             return 1.0
@@ -336,16 +336,16 @@ cdef class Distribution(object):
         return 1.0 - p
 
     @staticmethod
-    def fDistributionInverse(p: double,
+    def fDistributionInverse(p: float,
                              freedom1: int,
-                             freedom2: int) -> double:
+                             freedom2: int) -> float:
         """
         The fDistributionInverse method returns the F-Distribution Inverse of given probability value.
 
         PARAMETERS
         ----------
-        p : double
-            double probability.
+        p : float
+            float probability.
         freedom1 : int
             integer input for degrees of freedom.
         freedom2 : int
@@ -353,10 +353,10 @@ cdef class Distribution(object):
 
         RETURNS
         -------
-        double
+        float
             the F-Distribution Inverse of given probability.
         """
-        cdef double maxf, minf, fval
+        cdef float maxf, minf, fval
         maxf = Distribution.F_MAX
         minf = 0.0
         if p <= 0.0 or p >= 1.0:
@@ -373,23 +373,23 @@ cdef class Distribution(object):
         return fval
 
     @staticmethod
-    def tDistribution(T: double,
-                      freedom: int) -> double:
+    def tDistribution(T: float,
+                      freedom: int) -> float:
         """
         The tDistribution method is used instead of the normal distribution when there is small samples. It takes a
-        double input T and an integer freedom for degree of freedom as inputs. It returns the T-Distribution result by
+        float input T and an integer freedom for degree of freedom as inputs. It returns the T-Distribution result by
         using F-Distribution method.
 
         PARAMETERS
         ----------
-        T : double
-            double input.
+        T : float
+            float input.
         freedom : int
             integer input for degrees of freedom.
 
         RETURNS
         -------
-        double
+        float
             the T-Distribution result.
         """
         if T >= 0:
@@ -398,21 +398,21 @@ cdef class Distribution(object):
             return 1 - Distribution.fDistribution(T * T, 1, freedom) / 2
 
     @staticmethod
-    def tDistributionInverse(p: double,
-                             freedom: int) -> double:
+    def tDistributionInverse(p: float,
+                             freedom: int) -> float:
         """
         The tDistributionInverse method returns the T-Distribution Inverse of given probability value.
 
         PARAMETERS
         ----------
-        p : double
-            double probability.
+        p : float
+            float probability.
         freedom : int
             integer input for degrees of freedom.
 
         RETURNS
         -------
-        double
+        float
             the T-Distribution Inverse of given probability.
         """
         if p < 0.5:
