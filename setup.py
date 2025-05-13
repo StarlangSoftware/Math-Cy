@@ -9,7 +9,7 @@ setup(
     ext_modules=cythonize(["Math/*.pyx", "Math/*.pxd"],
                           compiler_directives={'language_level': "3"}),
     name='nlptoolkit-math-cy',
-    version='1.0.15',
+    version='1.0.16',
     packages=['Math'],
     package_data={'Math': ['*.pxd', '*.pyx', '*.c']},
     url='https://github.com/StarlangSoftware/Math-Cy',
