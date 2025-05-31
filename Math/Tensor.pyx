@@ -1,8 +1,4 @@
 # cython: boundscheck=False, wraparound=False
-import cython
-import numpy as np
-cimport numpy as np
-
 cdef class Tensor:
     def __init__(self, data, shape=None):
         """
@@ -26,7 +22,7 @@ cdef class Tensor:
 
         self._shape = shape
         self._strides = self._compute_strides(shape)
-        self._data = np.array(flat_data, dtype=np.float64)
+        self._data = flat_data[:]
 
     @property
     def shape(self):
@@ -207,7 +203,7 @@ cdef class Tensor:
         """
         if self._compute_num_elements(new_shape) != self._compute_num_elements(self._shape):
             raise ValueError("Total number of elements must remain the same.")
-        return Tensor(np.asarray(self._data).tolist(), new_shape)
+        return Tensor(self._data[:], new_shape)
 
     cpdef Tensor transpose(self, tuple axes=None):
         """
@@ -343,27 +339,33 @@ cdef class Tensor:
         ValueError
             If broadcasting is not possible.
         """
-        cdef int i, j
-        cdef int rank = len(target_shape)
-        cdef int size = self._compute_num_elements(target_shape)
-        cdef double[:] new_data = np.empty(size, dtype=np.float64)
-
-        cdef tuple expanded_shape = (1,) * (rank - len(self._shape)) + self._shape
+        cdef int i, j, rank, size
+        cdef tuple expanded, targ_strides, strides
+        cdef list new_data
+        cdef tuple idx, orig_idx
+        cdef int offset
+        rank = len(target_shape)
+        size = self._compute_num_elements(target_shape)
+        expanded = (1,) * (rank - len(self._shape)) + self._shape
         for i in range(rank):
-            if not (expanded_shape[i] == target_shape[i] or expanded_shape[i] == 1):
+            if not (expanded[i] == target_shape[i] or expanded[i] == 1):
                 raise ValueError(f"Cannot broadcast shape {self._shape} to {target_shape}")
 
-        cdef tuple target_strides = self._compute_strides(target_shape)
-        cdef tuple indices
-        cdef list temp
+        targ_strides = self._compute_strides(target_shape)
+        strides = self._strides
+        new_data = [0.0] * size
         for i in range(size):
-            indices = self._unflatten_index(i, target_strides)
-            temp = []
+            idx = self._unflatten_index(i, targ_strides)
+            # For each dimension, if expanded_dim>1, use idx dimension; else 0
+            orig_idx = []
             for j in range(rank):
-                temp.append(indices[j] if expanded_shape[j] > 1 else 0)
-            new_data[i] = self.get(tuple(temp))
+                if expanded[j] > 1:
+                    orig_idx.append(idx[j])
+                else:
+                    orig_idx.append(0)
+            new_data[i] = self.get(tuple(orig_idx))
 
-        return Tensor(np.asarray(new_data).tolist(), target_shape)
+        return Tensor(new_data, target_shape)
 
     def __add__(self, Tensor other):
         """
@@ -373,13 +375,13 @@ cdef class Tensor:
         cdef Tensor t1 = self.broadcast_to(shape)
         cdef Tensor t2 = other.broadcast_to(shape)
         cdef int size = self._compute_num_elements(shape)
-        cdef double[:] result_data = np.empty(size, dtype=np.float64)
+        cdef list result_data = [0.0] * size
         cdef int i
         cdef tuple idx
         for i in range(size):
             idx = self._unflatten_index(i, t1._strides)
             result_data[i] = t1.get(idx) + t2.get(idx)
-        return Tensor(np.asarray(result_data).tolist(), shape)
+        return Tensor(result_data, shape)
 
     def __sub__(self, Tensor other):
         """
@@ -389,13 +391,13 @@ cdef class Tensor:
         cdef Tensor t1 = self.broadcast_to(shape)
         cdef Tensor t2 = other.broadcast_to(shape)
         cdef int size = self._compute_num_elements(shape)
-        cdef double[:] result_data = np.empty(size, dtype=np.float64)
+        cdef double[:] result_data = [0.0] * size
         cdef int i
         cdef tuple idx
         for i in range(size):
             idx = self._unflatten_index(i, t1._strides)
             result_data[i] = t1.get(idx) - t2.get(idx)
-        return Tensor(np.asarray(result_data).tolist(), shape)
+        return Tensor(result_data, shape)
 
     def __mul__(self, Tensor other):
         """
@@ -405,13 +407,13 @@ cdef class Tensor:
         cdef Tensor t1 = self.broadcast_to(shape)
         cdef Tensor t2 = other.broadcast_to(shape)
         cdef int size = self._compute_num_elements(shape)
-        cdef double[:] result_data = np.empty(size, dtype=np.float64)
+        cdef double[:] result_data = [0.0] * size
         cdef int i
         cdef tuple idx
         for i in range(size):
             idx = self._unflatten_index(i, t1._strides)
             result_data[i] = t1.get(idx) * t2.get(idx)
-        return Tensor(np.asarray(result_data).tolist(), shape)
+        return Tensor(result_data, shape)
 
     cpdef Tensor dot(self, Tensor other):
         """
@@ -441,7 +443,7 @@ cdef class Tensor:
         cdef int n = self._shape[1]
         cdef int p = other._shape[1]
 
-        cdef double[:] result_data = np.empty(m * p, dtype=np.float64)
+        cdef double[:] result_data =  [0.0] * (m * p)
         cdef int i, j, k
         cdef double acc
 
@@ -452,7 +454,7 @@ cdef class Tensor:
                     acc += self.get((i, k)) * other.get((k, j))
                 result_data[i * p + j] = acc
 
-        return Tensor(np.asarray(result_data).tolist(), (m, p))
+        return Tensor(result_data, (m, p))
 
     cpdef Tensor partial(self, tuple start_indices, tuple end_indices):
         """
@@ -480,7 +482,7 @@ cdef class Tensor:
 
         cdef tuple new_shape = tuple([end - start for start, end in zip(start_indices, end_indices)])
         cdef int size = self._compute_num_elements(new_shape)
-        cdef double[:] sub_data = np.empty(size, dtype=np.float64)
+        cdef double[:] sub_data = [0.0] * size
 
         cdef tuple sub_strides = self._compute_strides(new_shape)
         cdef int i
@@ -491,7 +493,7 @@ cdef class Tensor:
             original_indices = tuple([start + offset for start, offset in zip(start_indices, sub_indices)])
             sub_data[i] = self.get(original_indices)
 
-        return Tensor(np.asarray(sub_data).tolist(), new_shape)
+        return Tensor(sub_data, new_shape)
 
     def __repr__(self):
         """

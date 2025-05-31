@@ -1,6 +1,3 @@
-# Tensor.pxd
-cimport numpy as np
-
 cdef class Tensor:
     cdef double[:] _data
     cdef tuple _shape
