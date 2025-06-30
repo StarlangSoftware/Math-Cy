@@ -1,4 +1,6 @@
 # cython: boundscheck=False, wraparound=False
+import array
+
 cdef class Tensor:
     def __init__(self, data, shape=None):
         """
@@ -22,7 +24,8 @@ cdef class Tensor:
 
         self._shape = shape
         self._strides = self._compute_strides(shape)
-        self._data = flat_data[:]
+        data_array = array.array('d', flat_data)
+        self._data = data_array
 
     @property
     def shape(self):
@@ -203,7 +206,8 @@ cdef class Tensor:
         """
         if self._compute_num_elements(new_shape) != self._compute_num_elements(self._shape):
             raise ValueError("Total number of elements must remain the same.")
-        return Tensor(self._data[:], new_shape)
+        # Convert self._data to a flat list before passing to Tensor
+        return Tensor(list(self._data), new_shape)
 
     cpdef Tensor transpose(self, tuple axes=None):
         """
@@ -342,8 +346,8 @@ cdef class Tensor:
         cdef int i, j, rank, size
         cdef tuple expanded, targ_strides, strides
         cdef list new_data
-        cdef tuple idx, orig_idx
-        cdef int offset
+        cdef tuple idx
+        cdef list orig_idx
         rank = len(target_shape)
         size = self._compute_num_elements(target_shape)
         expanded = (1,) * (rank - len(self._shape)) + self._shape
@@ -356,159 +360,193 @@ cdef class Tensor:
         new_data = [0.0] * size
         for i in range(size):
             idx = self._unflatten_index(i, targ_strides)
-            # For each dimension, if expanded_dim>1, use idx dimension; else 0
             orig_idx = []
             for j in range(rank):
                 if expanded[j] > 1:
                     orig_idx.append(idx[j])
                 else:
                     orig_idx.append(0)
-            new_data[i] = self.get(tuple(orig_idx))
+            # Only use the last len(self._shape) indices for get()
+            get_indices = tuple(orig_idx[-len(self._shape):])
+            new_data[i] = self.get(get_indices)
 
         return Tensor(new_data, target_shape)
 
-    def __add__(self, Tensor other):
+    cpdef Tensor multiply(self, Tensor other):
         """
-        Adds two tensors element-wise with broadcasting support.
+        Performs matrix multiplication (batched if necessary).
+
+        For tensors of shape (..., M, K) and (..., K, N), returns (..., M, N).
+
+        :param other: Tensor with shape compatible for matrix multiplication.
+        :return: Tensor resulting from matrix multiplication.
         """
-        cdef tuple shape = self._broadcast_shape(self._shape, other._shape)
-        cdef Tensor t1 = self.broadcast_to(shape)
-        cdef Tensor t2 = other.broadcast_to(shape)
-        cdef int size = self._compute_num_elements(shape)
-        cdef list result_data = [0.0] * size
+        if self._shape[len(self._shape)-1] != other._shape[len(other._shape)-2]:
+            raise ValueError(f"Shapes {self._shape} and {other._shape} are not aligned for multiplication.")
+
+        cdef tuple batch_shape = self._shape[:-2]
+        cdef int m = self._shape[len(self._shape)-2]
+        cdef int k1 = self._shape[len(self._shape)-1]
+        cdef int k2 = other._shape[len(other._shape)-2]
+        cdef int n = other._shape[len(other._shape)-1]
+
+        if k1 != k2:
+            raise ValueError("Inner dimensions must match for matrix multiplication.")
+
+        # Broadcasting batch shape if necessary
+        cdef tuple broadcast_shape
+        cdef Tensor self_broadcasted
+        cdef Tensor other_broadcasted
+        
+        if batch_shape != other._shape[:-2]:
+            broadcast_shape = self._broadcast_shape(self._shape[:-2], other._shape[:-2])
+            self_broadcasted = self.broadcast_to(broadcast_shape + (m, k1))
+            other_broadcasted = other.broadcast_to(broadcast_shape + (k2, n))
+        else:
+            broadcast_shape = batch_shape
+            self_broadcasted = self
+            other_broadcasted = other
+
+        cdef tuple result_shape = broadcast_shape + (m, n)
+        cdef list result_data = []
+        cdef int num_elements = self._compute_num_elements(result_shape)
+        cdef tuple result_strides = self._compute_strides(result_shape)
+        cdef int i, k
+        cdef tuple indices, batch_idx
+        cdef int row, col
+        cdef double sum_result
+        cdef tuple a_idx, b_idx
+
+        for i in range(num_elements):
+            indices = self._unflatten_index(i, result_strides)
+            batch_idx = indices[:-2]
+            row = indices[len(indices)-2]
+            col = indices[len(indices)-1]
+
+            sum_result = 0.0
+            for k in range(k1):
+                a_idx = batch_idx + (row, k)
+                b_idx = batch_idx + (k, col)
+                sum_result += self_broadcasted.get(a_idx) * other_broadcasted.get(b_idx)
+
+            result_data.append(sum_result)
+
+        return Tensor(result_data, result_shape)
+
+    cpdef Tensor add(self, Tensor other):
+        """
+        Adds two tensors element-wise with broadcasting.
+
+        :param other: The other tensor to add.
+        :return: New tensor with the result of the addition.
+        """
+        cdef tuple broadcast_shape = self._broadcast_shape(self._shape, other._shape)
+        cdef Tensor tensor1 = self.broadcast_to(broadcast_shape)
+        cdef Tensor tensor2 = other.broadcast_to(broadcast_shape)
+        cdef int num_elements = self._compute_num_elements(broadcast_shape)
+        cdef list result_data = []
         cdef int i
-        cdef tuple idx
-        for i in range(size):
-            idx = self._unflatten_index(i, t1._strides)
-            result_data[i] = t1.get(idx) + t2.get(idx)
-        return Tensor(result_data, shape)
+        cdef tuple indices1, indices2
+        
+        for i in range(num_elements):
+            indices1 = self._unflatten_index(i, tensor1._strides)
+            indices2 = self._unflatten_index(i, tensor2._strides)
+            result_data.append(tensor1.get(indices1) + tensor2.get(indices2))
+        
+        return Tensor(result_data, broadcast_shape)
 
-    def __sub__(self, Tensor other):
+    cpdef Tensor subtract(self, Tensor other):
         """
-        Subtracts the other tensor from self, element-wise, with broadcasting.
+        Subtracts one tensor from another element-wise with broadcasting.
+
+        :param other: The other tensor to subtract.
+        :return: New tensor with the result of the subtraction.
         """
-        cdef tuple shape = self._broadcast_shape(self._shape, other._shape)
-        cdef Tensor t1 = self.broadcast_to(shape)
-        cdef Tensor t2 = other.broadcast_to(shape)
-        cdef int size = self._compute_num_elements(shape)
-        cdef double[:] result_data = [0.0] * size
+        cdef tuple broadcast_shape = self._broadcast_shape(self._shape, other._shape)
+        cdef Tensor tensor1 = self.broadcast_to(broadcast_shape)
+        cdef Tensor tensor2 = other.broadcast_to(broadcast_shape)
+        cdef int num_elements = self._compute_num_elements(broadcast_shape)
+        cdef list result_data = []
         cdef int i
-        cdef tuple idx
-        for i in range(size):
-            idx = self._unflatten_index(i, t1._strides)
-            result_data[i] = t1.get(idx) - t2.get(idx)
-        return Tensor(result_data, shape)
+        cdef tuple indices1, indices2
+        
+        for i in range(num_elements):
+            indices1 = self._unflatten_index(i, tensor1._strides)
+            indices2 = self._unflatten_index(i, tensor2._strides)
+            result_data.append(tensor1.get(indices1) - tensor2.get(indices2))
+        
+        return Tensor(result_data, broadcast_shape)
 
-    def __mul__(self, Tensor other):
+    cpdef Tensor hadamardProduct(self, Tensor other):
         """
-        Multiplies two tensors element-wise with broadcasting support.
+        Multiplies two tensors element-wise with broadcasting.
+
+        :param other: The other tensor to multiply.
+        :return: New tensor with the result of the multiplication.
         """
-        cdef tuple shape = self._broadcast_shape(self._shape, other._shape)
-        cdef Tensor t1 = self.broadcast_to(shape)
-        cdef Tensor t2 = other.broadcast_to(shape)
-        cdef int size = self._compute_num_elements(shape)
-        cdef double[:] result_data = [0.0] * size
+        cdef tuple broadcast_shape = self._broadcast_shape(self._shape, other._shape)
+        cdef Tensor tensor1 = self.broadcast_to(broadcast_shape)
+        cdef Tensor tensor2 = other.broadcast_to(broadcast_shape)
+        cdef int num_elements = self._compute_num_elements(broadcast_shape)
+        cdef list result_data = []
         cdef int i
-        cdef tuple idx
-        for i in range(size):
-            idx = self._unflatten_index(i, t1._strides)
-            result_data[i] = t1.get(idx) * t2.get(idx)
-        return Tensor(result_data, shape)
-
-    cpdef Tensor dot(self, Tensor other):
-        """
-        Computes the dot product between two 2D tensors (matrix multiplication).
-
-        Parameters
-        ----------
-        other : Tensor
-            Another tensor to compute dot product with.
-
-        Returns
-        -------
-        Tensor
-            Result of the dot product.
-
-        Raises
-        ------
-        ValueError
-            If shapes are not aligned for matrix multiplication.
-        """
-        cdef int ndim_self = len(self._shape)
-        cdef int ndim_other = len(other._shape)
-        if self._shape[ndim_self - 1] != other._shape[ndim_other - 2]:
-            raise ValueError(f"Shapes {self._shape} and {other._shape} are not aligned for dot product.")
-
-        cdef int m = self._shape[0]
-        cdef int n = self._shape[1]
-        cdef int p = other._shape[1]
-
-        cdef double[:] result_data =  [0.0] * (m * p)
-        cdef int i, j, k
-        cdef double acc
-
-        for i in range(m):
-            for j in range(p):
-                acc = 0.0
-                for k in range(n):
-                    acc += self.get((i, k)) * other.get((k, j))
-                result_data[i * p + j] = acc
-
-        return Tensor(result_data, (m, p))
+        cdef tuple indices1, indices2
+        
+        for i in range(num_elements):
+            indices1 = self._unflatten_index(i, tensor1._strides)
+            indices2 = self._unflatten_index(i, tensor2._strides)
+            result_data.append(tensor1.get(indices1) * tensor2.get(indices2))
+        
+        return Tensor(result_data, broadcast_shape)
 
     cpdef Tensor partial(self, tuple start_indices, tuple end_indices):
         """
-        Extracts a sub-tensor from the given index ranges.
+        Extracts a sub-tensor from the given start indices to the end indices.
 
-        Parameters
-        ----------
-        start_indices : tuple
-            Start indices for each axis.
-        end_indices : tuple
-            End indices (exclusive) for each axis.
-
-        Returns
-        -------
-        Tensor
-            Extracted sub-tensor.
-
-        Raises
-        ------
-        ValueError
-            If the indices do not match tensor dimensions.
+        :param start_indices: Tuple specifying the start indices for each dimension.
+        :param end_indices: Tuple specifying the end indices (exclusive) for each dimension.
+        :return: A new Tensor containing the extracted sub-tensor.
         """
         if len(start_indices) != len(self._shape) or len(end_indices) != len(self._shape):
             raise ValueError("start_indices and end_indices must match the number of dimensions.")
 
-        cdef tuple new_shape = tuple([end - start for start, end in zip(start_indices, end_indices)])
-        cdef int size = self._compute_num_elements(new_shape)
-        cdef double[:] sub_data = [0.0] * size
-
-        cdef tuple sub_strides = self._compute_strides(new_shape)
+        # Compute the new shape of the extracted sub-tensor
+        cdef list new_shape_list = []
         cdef int i
-        cdef tuple sub_indices, original_indices
+        for i in range(len(start_indices)):
+            new_shape_list.append(end_indices[i] - start_indices[i])
+        cdef tuple new_shape = tuple(new_shape_list)
 
-        for i in range(size):
-            sub_indices = self._unflatten_index(i, sub_strides)
-            original_indices = tuple([start + offset for start, offset in zip(start_indices, sub_indices)])
-            sub_data[i] = self.get(original_indices)
+        # Extract data from the original tensor
+        cdef list sub_data = []
+        cdef int num_elements = self._compute_num_elements(new_shape)
+        cdef tuple new_strides = self._compute_strides(new_shape)
+        cdef tuple sub_indices, original_indices
+        cdef list orig_indices_list
+        cdef int j
+
+        for i in range(num_elements):
+            sub_indices = self._unflatten_index(i, new_strides)
+            orig_indices_list = []
+            for j in range(len(start_indices)):
+                orig_indices_list.append(start_indices[j] + sub_indices[j])
+            original_indices = tuple(orig_indices_list)
+            sub_data.append(self.get(original_indices))
 
         return Tensor(sub_data, new_shape)
 
     def __repr__(self):
         """
-        Returns a string representation of the tensor showing shape and data.
+        Returns a string representation of the tensor.
+
+        :return: String representing the tensor.
         """
-        cdef list data_list = list(self._data)
-        cdef int dim = len(self._shape)
-        cdef str result = f"Tensor(shape={self._shape}, data="
-        if dim == 1:
-            result += str(data_list)
-        elif dim == 2:
-            stride = self._shape[1]
-            result += str([data_list[i * stride:(i + 1) * stride] for i in range(self._shape[0])])
-        else:
-            result += "<nd tensor>"
-        result += ")"
-        return result
+        def format_tensor(data, shape):
+            if len(shape) == 1:
+                return data
+            stride = self._compute_num_elements(shape[1:])
+            return [format_tensor(data[i * stride:(i + 1) * stride], shape[1:]) for i in range(shape[0])]
+
+        formatted_data = format_tensor(self._data, self._shape)
+        return f"Tensor(shape={self._shape}, data={formatted_data})"
 
