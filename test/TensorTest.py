@@ -1,10 +1,4 @@
 import unittest
-import sys
-import os
-
-# Add the parent directory to the path so we can import Math.Tensor
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
 from Math.Tensor import Tensor
 
 
