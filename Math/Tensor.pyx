@@ -2,6 +2,7 @@
 import array
 
 cdef class Tensor:
+
     def __init__(self, data, shape=None):
         """
         Initializes a Tensor from nested list data with an optional shape.
@@ -163,7 +164,7 @@ cdef class Tensor:
             for j in range(end_index1):
                 new_list.append(self.__data[i * end_index1 + j])
             for j in range(end_index2):
-                new_list.append(self.__data[i * end_index2 + j])
+                new_list.append(other[i * end_index2 + j])
         return Tensor(new_list, tuple(new_shape))
 
     cpdef Tensor get(self, tuple dimensions):
